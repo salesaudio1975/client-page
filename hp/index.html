@@ -1,0 +1,25 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Holiday pick</title><meta name="robots" content="noindex"><meta name="referrer" content="no-referrer">
+<style>body{margin:0;background:#fff;color:#1b2733;font:16px/1.45 Arial,Helvetica,sans-serif}.w{max-width:440px;margin:24px auto;padding:0 16px}h2{margin:0 0 2px}.sub{color:#5d6b78;font-size:14px;margin:0 0 16px}
+label{display:block;border:1px solid #b9c3cc;border-radius:8px;padding:11px;margin:0 0 8px;cursor:pointer}label.on{border:2px solid #1b2733;background:#f3f6f9}label input{margin-right:8px}
+button{display:block;width:100%;margin-top:14px;padding:12px;border:1px solid #1b2733;border-radius:8px;background:#fff;color:#1b2733;font:bold 16px Arial}button:disabled{opacity:.5}
+.ok{font-size:19px;font-weight:bold;color:#1d7a3a}.err{color:#c62828;font-weight:bold}.note{color:#5d6b78;font-size:13px}.top{font-weight:bold;letter-spacing:.03em;border-bottom:2px solid #1b2733;padding-bottom:6px;margin-bottom:14px}</style></head>
+<body><div class="w"><div class="top">AUDIO BREAKTHROUGHS</div><div id="app"><p class="sub">Loading your pick…</p></div></div>
+<script>
+var Q=new URLSearchParams(location.search),P={hp:Q.get("hp")||"",u:Q.get("u")||"",k:Q.get("k")||""},pre=Q.get("c")||"";
+var API="https://script.google.com/macros/s/"+((Q.get("s")||"").replace(/[^\w-]/g,"")||"AKfycbzOtTatb-yy62Ig6gBKc_zfWIVBGNMvqbM676_x_3nnFF6TAKuwcLsSk_NNm3Av6ehP")+"/exec";
+function e(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function call(fn,extra,cb,tries){var b={api:"hp",fn:fn,hp:P.hp,u:P.u,k:P.k};for(var x in extra)b[x]=extra[x];tries=tries||0;
+ fetch(API,{method:"POST",redirect:"follow",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(b)}).then(function(r){return r.json()}).then(function(x){if(x&&x.ok)cb(null,x.r);else cb(new Error(x&&x.error||"Something went wrong. Try again."))}).catch(function(){if(tries<1&&fn==="get")return setTimeout(function(){call(fn,extra,cb,1)},1500);cb(new Error("No connection. Check your signal and try again."))})}
+var A=document.getElementById("app");
+function head(d){return '<h2>'+e(d.name)+'</h2><div class="sub">For '+e(d.who)+' · due '+e(d.due)+'</div>'}
+function show(d,err){if(d.saved)return A.innerHTML=head(d)+'<div class="ok">✓ Saved: '+e(d.cur.text)+'</div><p class="sub">'+(d.cur.choice==="none"?"The office will pick a day for you.":d.cur.choice==="neither"?"You keep a spare day for later.":"It's on the schedule.")+' You can change it from the same email until '+e(d.due)+'.</p><p class="note">'+e(d.note)+'</p>';
+ if(d.cur&&d.cur.status==="approved"&&d.locked)return A.innerHTML=head(d)+'<div class="ok">✓ Approved: '+e(d.cur.text)+'</div><p class="sub">To change it, ask the office.</p>';
+ if(d.closed)return A.innerHTML=head(d)+'<p>Picks for this holiday are closed.</p>';
+ var c=pre||(d.cur&&d.cur.choice)||"";
+ A.innerHTML=head(d)+(err?'<p class="err">'+e(err)+'</p>':'')+(d.cur?'<p class="sub" style="margin:0 0 10px">Your pick now: <b>'+e(d.cur.text)+'</b></p>':'')+
+  d.opts.map(function(o){return '<label class="'+(o[0]===c?'on':'')+'"><input type="radio" name="c" value="'+o[0]+'"'+(o[0]===c?' checked':'')+'>'+e(o[1])+'</label>'}).join("")+'<button id="sv">Save my pick</button><p class="note">'+e(d.note)+'</p>';
+ [].forEach.call(A.querySelectorAll("input[name=c]"),function(r){r.onchange=function(){pre=r.value;[].forEach.call(A.querySelectorAll("label"),function(l){l.className=l.contains(r)?"on":""})}});
+ document.getElementById("sv").onclick=function(){var r=A.querySelector("input[name=c]:checked");if(!r)return show(d,"Pick one of the choices.");this.disabled=true;this.textContent="Saving…";
+  call("save",{c:r.value},function(er,d2){if(er)return show(d,er.message);show(d2)})}}
+call("get",{},function(er,d){if(er)return A.innerHTML='<h2>This link isn\'t working</h2><p class="sub">'+e(er.message)+'</p>';show(d)});
+</script></body></html>
